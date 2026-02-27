@@ -1,0 +1,134 @@
+asyncapi: '2.6.0'
+info:
+  title: DeathByCaptcha Socket API (Async/TCP description)
+  version: '1.0.0'
+  description: |
+    Description of the DeathByCaptcha socket/TCP protocol used by `SocketClient`.
+    Messages are JSON objects terminated with CRLF. Client sends commands with `cmd` and server replies with JSON response objects.
+servers:
+  dbc-tcp:
+    url: api.dbcapi.me:8123
+    protocol: tcp
+    description: TCP server. Server may listen on ports 8123-8130; clients typically pick one randomly.
+channels:
+  socket:
+    description: Single bidirectional TCP channel; client publishes requests and subscribes to responses.
+    publish:
+      summary: Messages sent by client to server
+      message:
+        $ref: '#/components/messages/DbcCommand'
+    subscribe:
+      summary: Messages sent by server to client
+      message:
+        $ref: '#/components/messages/DbcResponse'
+components:
+  messages:
+    DbcCommand:
+      name: DbcCommand
+      payload:
+        type: object
+        required: [cmd, version]
+        properties:
+          cmd:
+            type: string
+            description: Command name (login, upload, captcha, report, user)
+          version:
+            type: string
+          username:
+            type: string
+          password:
+            type: string
+          authtoken:
+            type: string
+          captcha:
+            type: integer
+          # upload variant: base64 image string
+          captcha_base64:
+            type: string
+          type:
+            type: integer
+          token_params:
+            type: object
+        examples:
+          login:
+            summary: Login command
+            payload:
+              cmd: login
+              version: DBC/Python v1
+              username: your_user
+              password: your_pass
+          upload_base64:
+            summary: Upload command (base64 image)
+            payload:
+              cmd: upload
+              version: DBC/Python v1
+              captcha_base64: "<base64string>"
+              type: 0
+          upload_token:
+            summary: Upload token-based captcha (reCAPTCHA token)
+            payload:
+              cmd: upload
+              version: DBC/Python v1
+              type: 4
+              token_params:
+                proxy: "http://127.0.0.1:3128"
+                proxytype: "HTTP"
+                googlekey: "6Le-wvkSAAAA..."
+                pageurl: "http://test.com/path_with_recaptcha"
+    DbcResponse:
+      name: DbcResponse
+      payload:
+        type: object
+        properties:
+          error:
+            type: string
+          captcha:
+            type: integer
+          text:
+            type: string
+            nullable: true
+          is_correct:
+            type: integer
+            description: 0 or 1
+        examples:
+          solved:
+            payload:
+              captcha: 12345
+              text: solved-text
+              is_correct: 1
+          pending:
+            payload:
+              captcha: 12345
+              text: null
+              is_correct: 0
+          error_example:
+            payload:
+              error: not-logged-in
+              captcha: 0
+  schemas:
+    TokenParams:
+      type: object
+      properties:
+        proxy:
+          type: string
+        proxytype:
+          type: string
+        googlekey:
+          type: string
+        pageurl:
+          type: string
+        action:
+          type: string
+        min_score:
+          type: number
+      example:
+        proxy: "http://127.0.0.1:3128"
+        proxytype: "HTTP"
+        googlekey: "6Le-wvkSAAAA..."
+        pageurl: "http://test.com/path_with_recaptcha"
+        action: "login"
+        min_score: 0.3
+x-bindings:
+  tcp:
+    framing: crlf
+    note: Messages are JSON text followed by CRLF; clients should read until CRLF.
