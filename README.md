@@ -1,5 +1,6 @@
 # API Specification and Validation
 [![Validate APIs](https://github.com/deathbycaptcha/deathbycaptcha-agent-api-metadata/actions/workflows/validate-api.yml/badge.svg)](https://github.com/deathbycaptcha/deathbycaptcha-agent-api-metadata/actions/workflows/validate-api.yml)
+
 This directory is optimized for **AI agents** and other automated tools
 that need to build metadata about the DeathByCaptcha services. It contains
 formal specs and simple validation utilities for DeathByCaptcha APIs used
