@@ -33,11 +33,17 @@ def dbc_credentials():
     password = os.environ.get("DBC_PASSWORD")
     
     if not username or not password:
-        # Try loading from .env file
-        env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
-        env_vars = _load_env_file(env_path)
-        username = username or env_vars.get("USERNAME")
-        password = password or env_vars.get("PASSWORD")
+        # Try loading from a .env file (repo root preferred, fallback to tests dir).
+        # original layout placed tests at top level; after restructuring we
+        # search two levels up which corresponds to the repository root.
+        repo_env = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+        test_env = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+        for env_path in (repo_env, test_env):
+            env_vars = _load_env_file(env_path)
+            username = username or env_vars.get("USERNAME")
+            password = password or env_vars.get("PASSWORD")
+            if username and password:
+                break
     
     if not username or not password:
         pytest.skip("DBC_USERNAME and DBC_PASSWORD not configured")

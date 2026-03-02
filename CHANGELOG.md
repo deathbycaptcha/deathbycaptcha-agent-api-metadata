@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-03-02
+
+### Added
+
+- **Agent‑friendly metadata**
+  - `spec/metadata/api_manifest.jsonld` provides a concise list of HTTP
+    endpoints and descriptions.
+  - `validation/python/generate_manifest.py` script to regenerate the manifest
+    from the OpenAPI spec.
+  - `validation/python/tests/test_manifest.py` ensures manifest stays in sync.
+  - README expanded with instructions and references to the manifest and
+    JSON‑LD contexts.
+
+### Removed
+
+- Obsolete Markdown reports (`API_VALIDATION_REPORT.md`,
+  `ADDITIONAL_VALIDATION_REPORT.md`, `SPEC_REVIEW.md`) cleaned from root.
+
+### Changed
+
+- Minor spec cleanup for YAML parsing (indentation fixes).
+- Documentation updates across README and SPEC_REVIEW (now archived).
+
+## [1.0.1] - 2026-03-02
+
+### Changed
+
+- Restructured repository to emphasize API metadata over Python validation.  
+  - Specs moved under `spec/` with subdirectories `openapi/` and `jsonld/`.  
+  - Validation code relocated to `validation/python/`; original tests no longer at top level.  
+  - README rewritten to focus on spec usage, with validation instructions marked optional.  
+  - CI workflows and documentation updated to reference new paths.  
+  - Changelog and other documentation updated accordingly.
+
+### Removed
+
+- Python examples and validation utilities no longer pollute root; kept only under `validation/`.  
+- Sample files moved into validation directory.  
+- Top-level `tests/` directory removed.
+
+
 ## [1.0.0] - 2026-02-26
 
 ### Added
@@ -96,28 +137,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Repository Structure
 
 ```
-.env.example                              # Credential template
-.env                                      # Local credentials (gitignored)
-.github/workflows/validate-api.yml        # GitHub Actions CI
-.gitlab-ci.yml                            # GitLab CI/CD config
-README.md                                 # Main documentation
-CHANGELOG.md                              # This file
-.gitignore                                # Git ignore patterns
-LICENSE                                   # License file
-openapi_http.yaml                         # HTTP API spec
-openapi_sockets.yaml                      # Socket API spec
-jsonld/
-  ├── http_context.jsonld                 # HTTP JSON-LD context
-  └── socket_context.jsonld               # Socket JSON-LD context
-samples/                                  # Test sample files
-  ├── normal.jpg, banner.jpg, audio.mp3
-  └── ... (optional fixture images)
-tests/
-  ├── __init__.py
-  ├── conftest.py                         # Pytest fixtures
-  ├── requirements.txt                    # Test dependencies
-  ├── test_http_api.py                    # HTTP tests
-  └── test_socket_api.py                  # Socket tests
+/ (root)
+├─ spec/
+│   ├─ openapi/
+│   │   ├─ http.yaml        # OpenAPI 3 HTTP API spec
+│   │   └─ sockets.yaml     # AsyncAPI/TCP socket API spec
+│   └─ jsonld/
+│       ├─ http_context.jsonld
+│       └─ socket_context.jsonld
+├─ validation/
+│   └─ python/
+│       ├─ tests/           # pytest suite (optional validation)
+│       └─ samples/         # placeholder images/audio used by tests
+├─ .env.example              # Credential template
+├─ .gitignore               # Git ignore patterns
+├─ README.md                # Main documentation
+├─ CHANGELOG.md             # This file
+└─ LICENSE                  # License file
 ```
 
 ---

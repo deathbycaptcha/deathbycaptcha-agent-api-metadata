@@ -14,10 +14,10 @@ test_dbc_apis:
   
   before_script:
     - pip install --upgrade pip
-    - pip install -r tests/requirements.txt
+    - pip install -r validation/python/tests/requirements.txt
   
   script:
-    - pytest tests/ -v --tb=short
+    - pytest validation/python/tests/ -v --tb=short
   
   only:
     - main

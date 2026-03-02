@@ -3,7 +3,14 @@ info:
   title: DeathByCaptcha HTTP API (spec)
   version: "1.0.0"
   description: |
-    OpenAPI specification for DeathByCaptcha HTTP API (based on README and client implementation).
+    OpenAPI specification for DeathByCaptcha HTTP API.  This file is
+    intentionally crafted for use by AI agents and automated tooling;
+    it describes the live service in a language-agnostic format so that
+    clients can be generated or reasoned about in any programming
+    language.  The contents track the public API at https://deathbycaptcha.com/api
+    and are the canonical metadata for this repository.  A companion
+    JSON-LD manifest (`spec/metadata/api_manifest.jsonld`) and corresponding
+    JSON-LD contexts provide quick‑start summaries for agents.
 servers:
   - url: http://api.dbcapi.me/api
 paths:
@@ -39,7 +46,15 @@ paths:
       description: |
         Upload a captcha using multipart/form-data (file in `captchafile`) or
         by providing base64 content in the `captcha` field. Use `type` to
-        specify specialized APIs: 2=Coordinates, 3=Image Group, 4=Token, 5=reCAPTCHA v3.
+        specify specialized APIs: 2=Coordinates, 3=Image Group, 4=Token, 5=reCAPTCHA v3
+        (see below for a full list of types up to 25).  **All types share the
+        same response structure:** the server always returns a JSON object
+        conforming to `CaptchaResponse` containing at minimum a `captcha` id
+        and `status`.  Clients are expected to poll `/captcha/{id}` to check for
+        completion; until solved the `text` field will be empty or null and
+        `is_correct` is false.  A reply with HTTP 501 indicates missing
+        parameters or an unsupported combination of type/fields; this should be
+        treated as a hard error rather than a solvable captcha.
       requestBody:
         required: true
         content:
@@ -119,14 +134,14 @@ paths:
                   type: string
                   description: JSON string with parameters for token APIs (proxy, proxytype, googlekey, pageurl, action, min_score)
                 geetest_params:
-                  type: object
-                  description: Provider-specific JSON for Geetest (v3/v4)
+                  type: string
+                  description: JSON string with provider-specific parameters for Geetest (v3/v4)
                 textcaptcha:
                   type: string
                   description: Question text for textcaptcha
                 turnstile_params:
-                  type: object
-                  description: JSON payload for Cloudflare Turnstile
+                  type: string
+                  description: JSON string with parameters for Cloudflare Turnstile
                 audio:
                   type: string
                   description: Base64 audio for audio captchas
@@ -134,38 +149,38 @@ paths:
                   type: string
                   description: Language code for audio captchas
                 lemin_params:
-                  type: object
-                  description: Payload for Lemin captchas
+                  type: string
+                  description: JSON string with parameters for Lemin captchas
                 capy_params:
-                  type: object
-                  description: Payload for Capy captchas
+                  type: string
+                  description: JSON string with parameters for Capy captchas
                 waf_params:
-                  type: object
-                  description: Payload for Amazon WAF captchas
+                  type: string
+                  description: JSON string with parameters for Amazon WAF captchas
                 siara_params:
-                  type: object
-                  description: Payload for Siara captchas
+                  type: string
+                  description: JSON string with parameters for Siara captchas
                 mtcaptcha_params:
-                  type: object
-                  description: Payload for Mtcaptcha captchas
+                  type: string
+                  description: JSON string with parameters for Mtcaptcha captchas
                 cutcaptcha_params:
-                  type: object
-                  description: Payload for Cutcaptcha captchas
+                  type: string
+                  description: JSON string with parameters for Cutcaptcha captchas
                 friendly_params:
-                  type: object
-                  description: Payload for Friendly captchas
+                  type: string
+                  description: JSON string with parameters for Friendly captchas
                 datadome_params:
-                  type: object
-                  description: Payload for Datadome captchas
+                  type: string
+                  description: JSON string with parameters for Datadome captchas
                 tencent_params:
-                  type: object
-                  description: Payload for Tencent captchas
+                  type: string
+                  description: JSON string with parameters for Tencent captchas
                 atb_params:
-                  type: object
-                  description: Payload for ATB captchas
+                  type: string
+                  description: JSON string with parameters for ATB captchas
                 token_enterprise_params:
-                  type: object
-                  description: Payload for reCAPTCHA v2 Enterprise tokens
+                  type: string
+                  description: JSON string with parameters for reCAPTCHA v2 Enterprise tokens
       responses:
         '200':
           description: Upload response
@@ -204,18 +219,24 @@ paths:
   /captcha/{captchaId}/report:
     post:
       summary: Report an incorrectly solved captcha
+      description: |
+        Report a captcha as incorrectly solved. After reporting, the captcha's
+        `is_correct` field will be set to false. Requires authentication via
+        username/password or authtoken.
       parameters:
         - name: captchaId
           in: path
           required: true
           schema:
             type: integer
+            description: The captcha ID to report
       requestBody:
         required: true
         content:
           application/x-www-form-urlencoded:
             schema:
               type: object
+              description: Authentication is required (same as for /user endpoint)
               properties:
                 username:
                   type: string
@@ -223,17 +244,22 @@ paths:
                   type: string
                 authtoken:
                   type: string
+              oneOf:
+                - required: [username, password]
+                - required: [authtoken]
       responses:
         '200':
-          description: Report result
+          description: Report result (returns captcha details with is_correct set to false)
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  is_correct:
-                    type: integer
-                    description: 0 or 1
+                $ref: '#/components/schemas/CaptchaResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /status:
     get:
       summary: Retrieve current server status
@@ -254,23 +280,35 @@ components:
       properties:
         user:
           type: integer
+          description: User ID
         rate:
           type: number
+          description: Current hourly rate in dollars
         balance:
           type: number
+          description: Account balance in dollars
         is_banned:
           type: boolean
+          description: Whether the account is banned
+        status:
+          type: integer
+          description: HTTP status code (0 for success)
     CaptchaResponse:
       type: object
       properties:
         captcha:
           type: integer
+          description: Captcha ID
         text:
           type: string
+          description: Solution text (empty string if not yet solved, or for types where solution is empty)
           nullable: true
         is_correct:
+          type: boolean
+          description: Whether the captcha was solved correctly (true/false)
+        status:
           type: integer
-          description: 0 or 1
+          description: HTTP status code (0 for success)
     ServerStatus:
       type: object
       properties:
@@ -306,6 +344,8 @@ components:
           example: "http://user:pass@127.0.0.1:3128"
         proxytype:
           type: string
+          description: Proxy type (HTTP, HTTPS, SOCKS4, SOCKS5)
+          example: "HTTP"
     GeetestParams:
       type: object
       description: Provider-specific configuration for Geetest v3/v4.
@@ -359,6 +399,9 @@ components:
     TokenEnterpriseParams:
       type: object
       description: reCAPTCHA v2 Enterprise token payload
+      properties:
+        proxytype:
+          type: string
           description: Proxy type (HTTP, HTTPS, SOCKS4, SOCKS5)
           example: "HTTP"
         googlekey:

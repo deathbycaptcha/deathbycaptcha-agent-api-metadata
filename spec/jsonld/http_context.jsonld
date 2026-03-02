@@ -1,13 +1,21 @@
 {
   "@context": {
     "dbc": "https://deathbycaptcha.com/schema#",
-    "cmd": "dbc:cmd",
-    "version": "dbc:version",
     "captcha": "dbc:captcha",
     "text": "dbc:text",
     "is_correct": "dbc:is_correct",
-    "error": "dbc:error",
-    "captcha_base64": "dbc:captcha_base64",
+    "user": "dbc:user",
+    "rate": "dbc:rate",
+    "balance": "dbc:balance",
+    "is_banned": "dbc:is_banned",
+    "created": "dbc:created",
+    "banner": "dbc:banner",
+    "banner_text": "dbc:banner_text",
+    "grid": "dbc:grid",
+    "status": "dbc:status",
+    "todays_accuracy": "dbc:todays_accuracy",
+    "solved_in": "dbc:solved_in",
+    "is_service_overloaded": "dbc:is_service_overloaded",
     "token_params": {
       "@id": "dbc:token_params",
       "@type": "@json"

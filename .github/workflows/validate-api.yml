@@ -7,9 +7,8 @@ on:
   workflow_dispatch:  # Allow manual trigger
   push:
     paths:
-      - 'openapi_*.yaml'
-      - 'jsonld/**'
-      - 'tests/**'
+      - 'spec/**'
+      - 'validation/python/tests/**'
       - '.github/workflows/validate-api.yml'
 
 jobs:
@@ -29,14 +28,14 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r tests/requirements.txt
+          pip install -r validation/python/tests/requirements.txt
 
       - name: Run API tests
         env:
           DBC_USERNAME: ${{ secrets.DBC_USERNAME }}
           DBC_PASSWORD: ${{ secrets.DBC_PASSWORD }}
         run: |
-          pytest tests/ -v --tb=short
+          pytest validation/python/tests/ -v --tb=short
 
       - name: Test results
         if: always()

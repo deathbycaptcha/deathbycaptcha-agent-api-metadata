@@ -3,8 +3,14 @@ info:
   title: DeathByCaptcha Socket API (Async/TCP description)
   version: '1.0.0'
   description: |
-    Description of the DeathByCaptcha socket/TCP protocol used by `SocketClient`.
-    Messages are JSON objects terminated with CRLF. Client sends commands with `cmd` and server replies with JSON response objects.
+    AsyncAPI/TCP description of the DeathByCaptcha socket protocol. This
+    specification is provided primarily for AI agents and automated
+    tooling that need to understand or generate socket clients in any
+    language. Messages are JSON objects terminated with CRLF. Clients send
+    commands with `cmd` and the server replies with JSON response objects.
+    See also the JSON-LD contexts (`spec/jsonld/socket_context.jsonld`) and
+    the HTTP manifest (`spec/metadata/api_manifest.jsonld`) for complementary
+    machine-readable summaries.
 servers:
   dbc-tcp:
     url: api.dbcapi.me:8123
@@ -79,32 +85,54 @@ components:
       name: DbcResponse
       payload:
         type: object
+        description: |
+          Generic response object. Depending on the command the server may include
+          additional fields such as `user`, `rate`, `balance` and `is_banned` after
+          a `login` or `user` request. Responses for captcha-related commands
+          always include `captcha` (id), `text` (solution or empty string),
+          `is_correct` and `status`.
         properties:
           error:
             type: string
+            description: Error message if the command failed
+          status:
+            type: integer
+            description: Status code (0 for success, 255 for errors such as unknown-command)
           captcha:
             type: integer
           text:
             type: string
             nullable: true
           is_correct:
-            type: integer
-            description: 0 or 1
+            type: boolean
+            description: Whether the captcha is/was correct (true/false)
+        additionalProperties: true
         examples:
           solved:
             payload:
               captcha: 12345
               text: solved-text
-              is_correct: 1
+              is_correct: true
+              status: 0
           pending:
             payload:
               captcha: 12345
               text: null
-              is_correct: 0
+              is_correct: false
+              status: 0
+          login:
+            payload:
+              user: 6789
+              rate: 0.25
+              balance: 12.34
+              is_banned: false
+              status: 0
           error_example:
             payload:
               error: not-logged-in
               captcha: 0
+              status: 255
+
   schemas:
     TokenParams:
       type: object
