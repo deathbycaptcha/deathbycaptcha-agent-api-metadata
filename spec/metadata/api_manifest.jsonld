@@ -7,10 +7,16 @@
     "method": "dbc:method",
     "description": "dbc:description"
   },
-  "baseURL": "http://api.dbcapi.me/api",
+  "baseURL": "https://api.dbcapi.me/api",
+  "note": "Use HTTPS for security. HTTP available at http://api.dbcapi.me/api (legacy fallback only).",
   "endpoints": [
     {
-      "path": "/user",
+      "path": "/",
+      "method": "GET",
+      "description": "Official docs describe balance lookup as GET to `/api` with either\n`username`+`password` or `authtoken`."
+    },
+    {
+      "path": "/",
       "method": "POST",
       "description": ""
     },

@@ -4,7 +4,7 @@ import pytest
 import requests
 
 
-BASE_URL = "http://api.dbcapi.me/api"
+BASE_URL = "https://api.dbcapi.me/api"  # Use HTTPS for security
 
 
 def post(path, data=None, files=None):
@@ -24,7 +24,7 @@ class TestHTTPAuth:
     def test_user_login(self, dbc_credentials):
         """Test user creation and authentication."""
         data = dbc_credentials.copy()
-        r = post("user", data=data)
+        r = post("", data=data)
         
         assert "user" in r, "user field missing in response"
         assert r.get("user") != 0, "user ID should not be 0"
@@ -32,7 +32,7 @@ class TestHTTPAuth:
     def test_balance(self, dbc_credentials):
         """Test balance retrieval."""
         data = dbc_credentials.copy()
-        r = post("user", data=data)
+        r = post("", data=data)
         
         assert "balance" in r, "balance field missing"
         assert float(r.get("balance", 0)) >= 0, "balance should be non-negative"

@@ -133,8 +133,9 @@ curl https://raw.githubusercontent.com/deathbycaptcha/deathbycaptcha-agent-api-m
 ```
 
 This gives you a structured list of:
-- Base URL: `http://api.dbcapi.me/api`
-- Available endpoints (POST /user, POST /captcha, GET /captcha/{id}, POST /captcha/{id}/report, GET /status)
+- **Primary Base URL (HTTPS)**: `https://api.dbcapi.me/api` (recommended for security)
+- **Fallback Base URL (HTTP)**: `http://api.dbcapi.me/api` (legacy only)
+- Available endpoints (GET/POST / for balance, POST /captcha, GET /captcha/{id}, POST /captcha/{id}/report, GET /status)
 - Human-readable descriptions
 
 ### 2. Parse the OpenAPI Specification
@@ -201,16 +202,16 @@ openapi-generator-cli generate \
   -i spec/openapi/http.yaml \
   -g python \
   -o generated_client_python
-
-# Using protobuf for additional schema validation
-protoc --python_out=. schema.proto
 ```
 
 ### 6. Key Fields for Agent Implementation
 
-#### Request Authentication (all POST/GET requests require one of):
-- **username + password**: Basic form-auth
-- **authtoken**: Bearer token (preferred for security)
+#### Request Authentication (for authenticated actions):
+- **username + password**: form fields in request body/query (official docs)
+- **authtoken**: form field in request body/query (official docs)
+
+#### Check Balance (`GET /` or `POST /`)
+- Returns `user`, `rate`, `balance`, `is_banned`, `status`
 
 #### Upload a CAPTCHA (`POST /captcha`)
 Required fields depend on type:
@@ -239,7 +240,7 @@ An AI agent is asked: *"Generate TypeScript code to check my DeathByCaptcha acco
 
 The agent:
 1. Parses `spec/openapi/http.yaml` to understand endpoints
-2. Identifies `/user` and `/status` endpoints
+2. Identifies `/` (balance) and `/status` endpoints
 3. Generates type-safe client code
 
 ### Generated Code (TypeScript)
@@ -263,7 +264,7 @@ interface ServerStatus {
 }
 
 class DeathByCaptchaClient {
-  private baseURL = 'http://api.dbcapi.me/api';
+  private baseURL = 'https://api.dbcapi.me/api';  // Use HTTPS for security
   private authToken: string;
 
   constructor(authToken: string) {
@@ -272,10 +273,16 @@ class DeathByCaptchaClient {
 
   async checkBalance(): Promise<UserResponse> {
     try {
+      const form = new URLSearchParams({ authtoken: this.authToken });
       const response = await axios.post<UserResponse>(
-        `${this.baseURL}/user`,
-        { authtoken: this.authToken },
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        `${this.baseURL}/`,
+        form,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          }
+        }
       );
       return response.data;
     } catch (error) {
@@ -301,8 +308,8 @@ class DeathByCaptchaClient {
 
       console.log('=== DeathByCaptcha Account Status ===');
       console.log(`User ID: ${balance.user}`);
-      console.log(`Balance: $${balance.balance.toFixed(2)}`);
-      console.log(`Hourly Rate: $${balance.rate}`);
+      console.log(`Balance (credits): ${balance.balance}`);
+      console.log(`Rate (per solved captcha): ${balance.rate}`);
       console.log(`Account Banned: ${balance.is_banned}`);
       console.log('\n=== Service Status ===');
       console.log(`Accuracy Today: ${status.todays_accuracy}%`);
@@ -348,7 +355,7 @@ from typing import Optional
 
 class DBCCaptchaSolver:
     def __init__(self, username: str, password: str):
-        self.base_url = "http://api.dbcapi.me/api"
+        self.base_url = "https://api.dbcapi.me/api"  # Use HTTPS for security
         self.username = username
         self.password = password
 

@@ -15,7 +15,16 @@ servers:
   dbc-tcp:
     url: api.dbcapi.me:8123
     protocol: tcp
-    description: TCP server. Server may listen on ports 8123-8130; clients typically pick one randomly.
+    description: |
+      TCP socket server on ports 8123–8130. Plain TCP protocol (unencrypted) optimized for
+      performance-critical integrations. Official client libraries available in multiple languages.
+
+      **Security Warning:** Credentials are sent in cleartext. Use ONLY in trusted networks
+      (corporate intranets, VPCs, internal microservices). For public internet or untrusted
+      networks, use the HTTPS HTTP API instead (encrypted by default).
+
+      If you need socket API through untrusted networks, tunnel through SSH/VPN before connecting.
+      See https://deathbycaptcha.com/api for official client code examples.
 channels:
   socket:
     description: Single bidirectional TCP channel; client publishes requests and subscribes to responses.

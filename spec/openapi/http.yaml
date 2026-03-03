@@ -8,15 +8,48 @@ info:
     it describes the live service in a language-agnostic format so that
     clients can be generated or reasoned about in any programming
     language.  The contents track the public API at https://deathbycaptcha.com/api
-    and are the canonical metadata for this repository.  A companion
-    JSON-LD manifest (`spec/metadata/api_manifest.jsonld`) and corresponding
-    JSON-LD contexts provide quick‑start summaries for agents.
+    and are the canonical metadata for this repository.
+
+    **Security Note:** Use HTTPS (primary server) whenever possible since
+    authentication credentials are sent in requests. HTTP is provided as
+    a fallback for legacy systems only.
 servers:
+  - url: https://api.dbcapi.me/api
+    description: Production API (HTTPS recommended for security)
   - url: http://api.dbcapi.me/api
+    description: HTTP fallback (legacy, not recommended)
 paths:
-  /user:
+  /:
+    get:
+      summary: Get user account details (credit balance)
+      parameters:
+        - name: username
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: password
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: authtoken
+          in: query
+          required: false
+          schema:
+            type: string
+      description: |
+        Official docs describe balance lookup as GET to `/api` with either
+        `username`+`password` or `authtoken`.
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
     post:
-      summary: Get user account details
+      summary: Get user account details (credit balance)
       requestBody:
         required: true
         content:
@@ -183,19 +216,39 @@ paths:
                   description: JSON string with parameters for reCAPTCHA v2 Enterprise tokens
       responses:
         '200':
-          description: Upload response
+          description: Upload response (JSON clients may follow redirects and observe 200)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CaptchaResponse'
+        '303':
+          description: See Other. Official upload success status; Location header points to `/captcha/{id}`.
         '400':
-          description: Bad request (invalid parameters)
+          description: Bad request (invalid parameters or invalid image)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (invalid credentials or insufficient balance)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '501':
           description: Not implemented (missing or unsupported captcha type/parameters). Clients should supply correct parameters according to the type or consult API documentation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service temporarily unavailable (overloaded)
           content:
             application/json:
               schema:
@@ -236,7 +289,7 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               type: object
-              description: Authentication is required (same as for /user endpoint)
+              description: Authentication is required (same as for root `/` balance endpoint)
               properties:
                 username:
                   type: string
@@ -256,6 +309,12 @@ paths:
                 $ref: '#/components/schemas/CaptchaResponse'
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable (report rejected, e.g. invalid ownership, banned user, or too late)
           content:
             application/json:
               schema:
@@ -283,10 +342,10 @@ components:
           description: User ID
         rate:
           type: number
-          description: Current hourly rate in dollars
+          description: Charge per correctly solved CAPTCHA (official docs describe this in US cents)
         balance:
           type: number
-          description: Account balance in dollars
+          description: Account balance (official docs describe this in US cents)
         is_banned:
           type: boolean
           description: Whether the account is banned
@@ -486,14 +545,3 @@ components:
         type: 25
         token_enterprise_params: |
           {"proxy":"http://127.0.0.1:3128","googlekey":"...","pageurl":"https://example.org"}
-  securitySchemes:
-    basicAuth:
-      type: http
-      scheme: basic
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: authtoken
-security:
-  - basicAuth: []
-  - ApiKeyAuth: []
