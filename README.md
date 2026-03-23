@@ -450,3 +450,7 @@ Final token: 03AGdBq27qwuIu4...
   `.gitlab-ci.yml`) use the validation tests; they trigger on changes to
   the `spec/` or `validation/python/tests/` directories.
 
+## Responsible Use
+
+See [Responsible Use Agreement](RESPONSIBLE_USE.md).
+
